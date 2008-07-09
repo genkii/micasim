@@ -38,7 +38,12 @@ namespace OpenSim.Region.Physics.NewtonPlugin
     {
         private PhysicsVector _position;
         private PhysicsVector _velocity;
+        private PhysicsVector _oldPosition;
+        private PhysicsVector _oldVelocity;
         private PhysicsVector _acceleration;
+        private PhysicsVector _oldAcceleration;
+        private PhysicsVector _jerk;
+        private PhysicsVector _oldJerk;
         private PhysicsVector _size;
         private PhysicsVector m_rotationalVelocity = PhysicsVector.Zero;
         private Quaternion _orientation;
@@ -50,6 +55,11 @@ namespace OpenSim.Region.Physics.NewtonPlugin
             _velocity = new PhysicsVector();
             _position = new PhysicsVector();
             _acceleration = new PhysicsVector();
+            _jerk = new PhysicsVector();
+            _oldPosition = new PhysicsVector();
+            _oldVelocity = new PhysicsVector();
+            _oldAcceleration = new PhysicsVector();
+            _oldJerk = new PhysicsVector();
         }
 
         public override int PhysicsActorType
@@ -97,6 +107,12 @@ namespace OpenSim.Region.Physics.NewtonPlugin
         public override bool Stopped
         {
             get { return false; }
+        }
+
+        public PhysicsVector OldPosition
+        {
+          get { return _oldPosition; }
+          set { _oldPosition = value; }
         }
 
         public override PhysicsVector Position
@@ -147,6 +163,12 @@ namespace OpenSim.Region.Physics.NewtonPlugin
             set { return; }
         }
 
+        public PhysicsVector OldVelocity
+        {
+          get { return _oldVelocity; }
+          set { _oldVelocity = value; }
+        }
+
         public override PhysicsVector Velocity
         {
             get { return _velocity; }
@@ -165,9 +187,29 @@ namespace OpenSim.Region.Physics.NewtonPlugin
             set { _orientation = value; }
         }
 
+        public PhysicsVector OldAcceleration
+        {
+          get { return _oldAcceleration; }
+          set { _oldAcceleration = value; }
+        }
+
         public override PhysicsVector Acceleration
         {
             get { return _acceleration; }
+            // TODO: enable once there is a setter to override in PhysicsActor
+            // set { _acceleration = value; }
+        }
+
+        public PhysicsVector Jerk 
+        {
+          get { return _jerk; }
+          set { _jerk = value; }
+        }
+
+        public PhysicsVector OldJerk
+        {
+          get { return _oldJerk; }
+          set { _oldJerk = value; }
         }
 
         public override bool Kinematic
@@ -176,9 +218,23 @@ namespace OpenSim.Region.Physics.NewtonPlugin
             set { }
         }
 
+        // TODO: Replace with a setter once there is one in PhysicsActor to override
         public void SetAcceleration(PhysicsVector accel)
         {
             _acceleration = accel;
+        }
+
+        public void SetOldAcceleration(PhysicsVector accel) 
+        {
+          _oldAcceleration = accel;
+        }
+
+        public void SaveState() 
+        {
+          _oldPosition = _position;
+          _oldVelocity = _velocity;
+          _oldAcceleration = _acceleration;
+          _oldJerk = _jerk;
         }
 
         public override void AddForce(PhysicsVector force, bool pushforce)
@@ -258,6 +314,12 @@ namespace OpenSim.Region.Physics.NewtonPlugin
         public override bool SubscribedEvents()
         {
             return false;
+        }
+
+        public float KineticEnergy() 
+        {
+          float v = Velocity.length();
+          return 0.5f*Mass*v*v;
         }
     }
 }
