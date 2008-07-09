@@ -337,8 +337,9 @@ namespace OpenSim.Region.Physics.NewtonPlugin
 		{
 
 			float result = simulateCharacters(timestep);
-			
-			SimulateDKD(timestep);			
+			for (int i = 0; i < 10; i++) {
+				SimulateHermite(timestep/10.0f);
+			}
 
 			
 			if (((++energyCounter) % energyInterval) == 0)
@@ -500,19 +501,19 @@ namespace OpenSim.Region.Physics.NewtonPlugin
 		}
 		
 		private void gglSaveA1() {
-			for (int = 0; i < _prims.Count; i++) {
+			for (int i = 0; i < _prims.Count; i++) {
 				_prims[i].A1 = _prims[i].Acceleration;
 			}
 		}
 		
 		private void gglSaveA2() {
-			for (int = 0; i < _prims.Count; i++) {
+			for (int i = 0; i < _prims.Count; i++) {
 				_prims[i].A2 = _prims[i].Acceleration;
 			}
 		}
 		
 		private void gglSaveA2J2() {
-			for (int = 0; i < _prims.Count; i++) {
+			for (int i = 0; i < _prims.Count; i++) {
 				_prims[i].A2 = _prims[i].Acceleration;
 				_prims[i].J2 = _prims[i].Jerk;
 			}
@@ -539,17 +540,17 @@ namespace OpenSim.Region.Physics.NewtonPlugin
 			for (int i = 0; i < _prims.Count; i++) {
 				calculateAcceleration(i);
 			}
-			gglStoreA1();
+			gglSaveA1();
 			gglFinalPosition(timestep);
 			for (int i = 0; i < _prims.Count; i++) {
 				calculateAcceleration(i);
 			}
-			gglStoreA2();
+			gglSaveA2();
 			gglFinalVelocity(timestep);
 			for (int i = 0; i < _prims.Count; i++) {
 				calculateAccAndJerk(i);
 			}
-			gglStoreA2J2();
+			gglSaveA2J2();
 			
 		}
     }
