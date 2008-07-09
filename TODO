@@ -2,15 +2,25 @@
 
 * Details of Simulation
 ** Check integrator energy-scaling behavior:
-*** DKD: 2nd order
-*** KDK: 2nd order
 *** Hermite: 4th order
 
 ** Energy HUD (instead of output to INFO log)
 
+** Periodic boundary conditions
+Instead of clipping the X and Y coordinates, just have the particle
+exit one side and come in the other.  Also, don't clip at the ground;
+let it pass through.  If you clip any of the coordinates, it means
+that momentum is not conserved, and the center of mass of the system
+will drift (i.e. the system will fly off into the distance); this is
+unphysical.
+
 ** Velocity in ICs
 Add ability to set the velocity (maybe with a script on the prim?) in
 the initial conditions.
+
+** Allow Adaptive Timesteps
+Probably allow steps which are power-of-two fractions of the simulator
+timestep.
 
 * Forward-thinking
 

@@ -47,6 +47,7 @@ namespace OpenSim.Region.Physics.NewtonPlugin
 
 		private const int energyInterval = 10;
 		private int energyCounter = 0;
+
 		public NewtonScene()
         {
         }
@@ -324,8 +325,9 @@ namespace OpenSim.Region.Physics.NewtonPlugin
 
 			float result = simulateCharacters(timestep);
 			
-			SimulateDKD(timestep);
+			SimulateKDK(timestep);			
 			
+
 			if (((++energyCounter) % energyInterval) == 0)
 			{
 				m_log.Info(Energy());
