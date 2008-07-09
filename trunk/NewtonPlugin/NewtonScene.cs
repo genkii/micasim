@@ -459,5 +459,98 @@ namespace OpenSim.Region.Physics.NewtonPlugin
         {
           return KineticEnergy() + PotentialEnergy();
         }
+		
+		private void gglPredict(float h) {
+			float h2 = h*h;
+			float h3 = h2*h;
+			float h4 = h3*h;
+			float h5 = h4*h;
+			float h6 = h5*h;
+			
+			for (int i = 0; i < _prims.Count; i++) {
+				float hold = _prims[i].HOld;
+				float hold2 = hold*hold;
+				float hold3 = hold2*hold;
+				float hold4 = hold3*hold;
+				PhysicsVector a0 = _prims[i].A0;
+				PhysicsVector a1 = _prims[i].A1;
+				PhysicsVector a2 = _prims[i].A2;
+				PhysicsVector j0 = _prims[i].J0;
+				PhysicsVector j2 = _prims[i].J2;
+
+
+				
+				_prims[i].OldPosition = _prims[i].Position;
+				_prims[i].OldVelocity = _prims[i].Velocity;
+				_prims[i].HOld = h;
+				
+				_prims[i].Position = _prims[i].Position + 0.5f*h*_prims[i].Velocity + h2*a2/8.0f + j2*h3/48.0f - (5.0f*a0 - 16.0f*a1 + 11.0f*a2 + hold*j0 - 4.0f*hold*j2)*h4/(96.0f*hold2) - (14.0f*a0 - 32.0f*a1 + 18.0f*a2 + 3.0f*hold*j0 - 5.0f*hold*j2)*h5/(192.0f*hold3) - (4.0f*a0 - 8.0f*a1 + 4.0f*a2 + hold*j0 - hold*j2)*h6/(192.0f*hold4);
+				
+				_prims[i].A0 = _prims[i].A2;
+				_prims[i].J0 = _prims[i].J0;
+				_prims[i].FirstStep = false;
+			}
+		}
+		
+		private void gglSaveA0J0() {
+			for (int i = 0; i < _prims.Count; i++) {
+				_prims[i].A0 = _prims[i].Acceleration;
+				_prims[i].J0 = _prims[i].Jerk;
+			}
+		}
+		
+		private void gglSaveA1() {
+			for (int = 0; i < _prims.Count; i++) {
+				_prims[i].A1 = _prims[i].Acceleration;
+			}
+		}
+		
+		private void gglSaveA2() {
+			for (int = 0; i < _prims.Count; i++) {
+				_prims[i].A2 = _prims[i].Acceleration;
+			}
+		}
+		
+		private void gglSaveA2J2() {
+			for (int = 0; i < _prims.Count; i++) {
+				_prims[i].A2 = _prims[i].Acceleration;
+				_prims[i].J2 = _prims[i].Jerk;
+			}
+		}
+		
+		private void gglFinalPosition(float h) {
+			float h2 = h*h;
+			
+			for (int i = 0; i < _prims.Count; i++) {
+				_prims[i].Position = _prims[i].OldPosition + h*_prims[i].Velocity + 0.5f*h2*(_prims[i].A0/3.0f + 2.0f*_prims[i].A1/3.0f);
+			}
+		}
+		
+		private void gglFinalVelocity(float h) {
+			for (int i = 0; i < _prims.Count; i++) {
+				_prims[i].Velocity = _prims[i].Velocity + h*(_prims[i].A0/6.0f + 2.0f*_prims[i].A1/3.0f + _prims[i].A2/6.0f);
+			}
+		}
+		
+		private void SimulateGGL(float timestep) {
+			// Need something for first timestep.
+			
+			gglPredict(timestep);
+			for (int i = 0; i < _prims.Count; i++) {
+				calculateAcceleration(i);
+			}
+			gglStoreA1();
+			gglFinalPosition(timestep);
+			for (int i = 0; i < _prims.Count; i++) {
+				calculateAcceleration(i);
+			}
+			gglStoreA2();
+			gglFinalVelocity(timestep);
+			for (int i = 0; i < _prims.Count; i++) {
+				calculateAccAndJerk(i);
+			}
+			gglStoreA2J2();
+			
+		}
     }
 }
