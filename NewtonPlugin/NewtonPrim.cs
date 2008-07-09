@@ -45,6 +45,15 @@ namespace OpenSim.Region.Physics.NewtonPlugin
         private PhysicsVector _jerk;
         private PhysicsVector _oldJerk;
         private PhysicsVector _size;
+		
+		private PhysicsVector _a0;
+		private PhysicsVector _j0;
+		private PhysicsVector _a1;
+		private PhysicsVector _a2;
+		private PhysicsVector _j2;
+		private bool _firstStep;
+		private float _hOld;
+		
         private PhysicsVector m_rotationalVelocity = PhysicsVector.Zero;
         private Quaternion _orientation;
         private bool iscolliding;
@@ -60,6 +69,13 @@ namespace OpenSim.Region.Physics.NewtonPlugin
             _oldVelocity = new PhysicsVector();
             _oldAcceleration = new PhysicsVector();
             _oldJerk = new PhysicsVector();
+			
+			_a0 = new PhysicsVector();
+			_j0 = new PhysicsVector();
+			_a1 = new PhysicsVector();
+			_a2 = new PhysicsVector();
+			_j2 = new PhysicsVector();
+			_firstStep = true;
         }
 
         public override int PhysicsActorType
@@ -217,6 +233,42 @@ namespace OpenSim.Region.Physics.NewtonPlugin
             set { }
         }
 
+		public PhysicsVector A0 {
+			get { return _a0; }
+			set { _a0 = value; }
+		}
+		
+		public PhysicsVector A1 {
+			get { return _a1; }
+			set { _a1 = value; }
+		}
+		
+		public PhysicsVector A2 {
+			get { return _a2; }
+			set { _a2 = value; }
+		}
+		
+		public PhysicsVector J0 {
+			get { return _j0; }
+			set { _j0 = value; }
+		}
+		
+		public PhysicsVector J2 {
+			get { return _j2; }
+			set { _j2 = value; }
+		}
+		
+		public bool FirstStep {
+			get { return _firstStep; }
+			set { _firstStep = value; }
+		}
+		
+		public float HOld {
+			get { return _hOld; }
+			set { _hOld = value; }
+		}
+		
+
         // TODO: Replace with a setter once there is one in PhysicsActor to override
         public void SetAcceleration(PhysicsVector accel)
         {
@@ -230,13 +282,14 @@ namespace OpenSim.Region.Physics.NewtonPlugin
 
         public void SaveState() 
         {
-          _oldPosition = _position;
-          _oldVelocity = _velocity;
-          _oldAcceleration = _acceleration;
-          _oldJerk = _jerk;
-        }
+			_oldPosition = _position;
+			_oldVelocity = _velocity;
+			_oldAcceleration = _acceleration;
+			_oldJerk = _jerk;
 
-        public override void AddForce(PhysicsVector force, bool pushforce)
+        }
+		
+		public override void AddForce(PhysicsVector force, bool pushforce)
         {
         }
 
