@@ -318,53 +318,55 @@ namespace OpenSim.Region.Physics.NewtonPlugin
           return fps;
         }
 
-        public override float Simulate(float timestep)
-        {
-			float fps = simulateCharacters(timestep);
-          
-			updatePrimVelocities(timestep);
-			updatePrimPositions(timestep);
-			if ((energyCounter++) % energyInterval == 0)
+		
+		public override float Simulate(float timestep)
+		{
+
+			float result = simulateCharacters(timestep);
+			
+			SimulateDKD(timestep);
+			
+			if (((++energyCounter) % energyInterval) == 0)
 			{
 				m_log.Info(Energy());
 				energyCounter = 0;
-			}
-
+			}	
 			
-			return fps;
-        }
+			return result;
+		}
+		
 
-        public float SimulateDKD(float timestep) 
+        private void SimulateForwardEuler(float timestep)
+        {          
+			updatePrimVelocities(timestep);
+			updatePrimPositions(timestep);
+
+
+		}
+
+        private void SimulateDKD(float timestep) 
         {
-          float fps = simulateCharacters(timestep);
-
           updatePrimPositions(0.5f*timestep);
           updatePrimVelocities(timestep);
           updatePrimPositions(0.5f*timestep);
 
-          return fps;
-        }
+		}
 
         // This re-computes the force on each subsequent timestep:
         // (KDK)(KDK)(KDK)....  Usually, you would store the results
         // of the force computation, and re-use them in a
         // "Kick-stored" advance so there is only one force
         // computation per timestep on average: (KDK)(KsDK)(KsDK)....
-        public float SimulateKDK(float timestep)
+        private void SimulateKDK(float timestep)
         {
-          float fps = simulateCharacters(timestep);
-
           updatePrimVelocities(0.5f*timestep);
           updatePrimPositions(timestep);
           updatePrimVelocities(0.5f*timestep);
 
-          return fps;
-        }
+		}
 
-        public float SimulateHermite(float timestep) 
+        private void SimulateHermite(float timestep) 
         {
-          float fps = simulateCharacters(timestep);
-
           // TODO: pass in int
           // calculateAccAndJerk(timestep);
           savePrimStates();
@@ -373,8 +375,7 @@ namespace OpenSim.Region.Physics.NewtonPlugin
           // calculateAccAndJerk(timestep);
           finishPrims(timestep);
 
-          return fps;
-        }
+		}
 
         public override void GetResults()
         {
