@@ -1,0 +1,35 @@
+-*- outline -*-
+
+* Details of Simulation
+** Check integrator energy-scaling behavior:
+*** DKD: 2nd order
+*** KDK: 2nd order
+*** Hermite: 4th order
+
+** Energy HUD (instead of output to INFO log)
+
+** Velocity in ICs
+Add ability to set the velocity (maybe with a script on the prim?) in
+the initial conditions.
+
+* Forward-thinking
+
+** API for External Code
+We want to implement an API so that we can communicate with others'
+n-body code (already written).
+
+** Script Physics
+Maybe write a physics engine which queries prims about whether they
+would like to supply their own physics, or use a default engine.
+Would allow to put the simulation code into the prims rather than a
+plugin.
+
+** Visualization 
+
+*** Visualize 4-D data
+Simulation data comes in 4-D (3 space and 1 time).  Allow those four
+dimensions to be mapped onto the four dimensions of the virtual world
+in any arbitrary way.  For example, allow for visualization of the
+evolution of an orbiting system with x -> x, y -> y, and t -> z.  As
+the system evolves in time, the image in the virtual world becomes a
+double-helix running up the z-axis.

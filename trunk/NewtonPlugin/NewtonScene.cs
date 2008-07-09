@@ -45,7 +45,7 @@ namespace OpenSim.Region.Physics.NewtonPlugin
         private const float gravity = -9.8f;
         private const float eps = 1.0f; // Softening distance. 
 
-		private const int energyInterval = 50;
+		private const int energyInterval = 10;
 		private int energyCounter = 0;
 		public NewtonScene()
         {
