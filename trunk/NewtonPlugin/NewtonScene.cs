@@ -180,15 +180,11 @@ namespace OpenSim.Region.Physics.NewtonPlugin
               float r5 = r2*r3;
 
               acc += Math.Abs(gravity) * _prims[j].Mass * direction / r3;
-              // TODO: is dist2 ok here instead of distance?
-              // TODO: velocity/r3 is a vector, 3.0f*dot(direction, velocity)/r5 * dist2 is a scalar
-              // jerk += Math.Abs(gravity) * _prims[j].Mass * (velocity/r3 - 3.0f*dot(direction, velocity)/r5 * distance);
+              jerk += Math.Abs(gravity) * _prims[j].Mass * (velocity/r3 - 3.0f*dot(direction, velocity)/r5 * direction);
             }
+			_prims[i].SetAcceleration(acc);
 
-          // TODO: enable once PhysicsActor has an overridable acceleration setter
-          // _prims[i].Acceleration = acc;
-          _prims[i].SetAcceleration(acc);
-          _prims[i].Jerk = jerk;
+			_prims[i].Jerk = jerk;
         }
 
         private void savePrimStates() 
@@ -241,23 +237,38 @@ namespace OpenSim.Region.Physics.NewtonPlugin
             }
         }
 
-        private void updatePrimPositions(float timestep)
+
+		private void periodicBCs(PhysicsVector pos)
+		{
+			float smallestPos = 0.01f;
+			float largestPos = Constants.RegionSize - 0.01f;
+			
+			if (pos.X < smallestPos) 
+			{
+				pos.X = largestPos;
+			} else if (pos.X > largestPos) {
+				pos.X = smallestPos;
+			}
+			
+			if (pos.Y < smallestPos)
+			{
+				pos.Y = largestPos;
+			} else if (pos.Y > largestPos) {
+				pos.Y = smallestPos;
+			}
+				
+		}
+		private void updatePrimPositions(float timestep)
         {
             for (int i = 0; i < _prims.Count; ++i)
             {
                 if (!_prims[i].IsPhysical)
                     continue;
 
-                _prims[i].Position += timestep * _prims[i].Velocity;
+				_prims[i].Position += timestep * _prims[i].Velocity;
 
-                _prims[i].Position.X = Util.Clamp(_prims[i].Position.X, 0.01f, Constants.RegionSize - 0.01f);
-                _prims[i].Position.Y = Util.Clamp(_prims[i].Position.Y, 0.01f, Constants.RegionSize - 0.01f);
-
-                float terrainheight = _heightMap[(int)_prims[i].Position.Y * Constants.RegionSize + (int)_prims[i].Position.X];
-
-                if (_prims[i].Position.Z < terrainheight)
-                    _prims[i].Position.Z = terrainheight;
-            }
+				periodicBCs(_prims[i].Position);
+			}
         }
 
         private void updateCharacter(NewtonCharacter character, float timestep)
@@ -325,7 +336,7 @@ namespace OpenSim.Region.Physics.NewtonPlugin
 
 			float result = simulateCharacters(timestep);
 			
-			SimulateKDK(timestep);			
+			SimulateDKD(timestep);			
 			
 
 			if (((++energyCounter) % energyInterval) == 0)
