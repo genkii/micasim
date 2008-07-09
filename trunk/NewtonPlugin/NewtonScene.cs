@@ -47,6 +47,7 @@ namespace OpenSim.Region.Physics.NewtonPlugin
 
 		private const int energyInterval = 10;
 		private int energyCounter = 0;
+		
 
 		public NewtonScene()
         {
@@ -202,8 +203,8 @@ namespace OpenSim.Region.Physics.NewtonPlugin
 
           for (int j = 0; j < _prims.Count; j++)
             {
-              _prims[j].Position += dt*_prims[j].Velocity + 0.5f*dt2*_prims[j].Acceleration + (1.0f/6.0f)*dt3*_prims[j].Jerk;
-              _prims[j].Velocity += dt*_prims[j].Acceleration + 0.5f*dt2*_prims[j].Jerk;
+              _prims[j].Position = _prims[j].Position + dt*_prims[j].Velocity + 0.5f*dt2*_prims[j].Acceleration + (1.0f/6.0f)*dt3*_prims[j].Jerk;
+              _prims[j].Velocity = _prims[j].Velocity + dt*_prims[j].Acceleration + 0.5f*dt2*_prims[j].Jerk;
             }
         }
 
@@ -213,11 +214,12 @@ namespace OpenSim.Region.Physics.NewtonPlugin
 
           for (int j = 0; j < _prims.Count; j++) 
             {
-              // Important to do velocity first, so that more accurate velocity value can be used in position calculation.
-              _prims[j].Velocity = _prims[j].OldVelocity + 0.5f*(_prims[j].OldAcceleration + _prims[j].Acceleration)*dt + 
-                (1.0f/12.0f)*(_prims[j].OldJerk - _prims[j].Jerk)*dt2;
-              _prims[j].Position = _prims[j].OldPosition + 0.5f*(_prims[j].OldVelocity + _prims[j].Velocity)*dt + 
-                (1.0f/12.0f)*(_prims[j].OldAcceleration - _prims[j].Acceleration)*dt2;
+				// Important to do velocity first, so that more accurate velocity value can be used in position calculation.
+				_prims[j].Velocity = _prims[j].OldVelocity + 0.5f*(_prims[j].OldAcceleration + _prims[j].Acceleration)*dt + 
+					(1.0f/12.0f)*(_prims[j].OldJerk - _prims[j].Jerk)*dt2;
+				_prims[j].Position = _prims[j].OldPosition + 0.5f*(_prims[j].OldVelocity + _prims[j].Velocity)*dt + 
+					(1.0f/12.0f)*(_prims[j].OldAcceleration - _prims[j].Acceleration)*dt2;
+				periodicBCs(_prims[j].Position);
             }
         }
 
@@ -337,8 +339,8 @@ namespace OpenSim.Region.Physics.NewtonPlugin
 			float result = simulateCharacters(timestep);
 			
 			SimulateDKD(timestep);			
-			
 
+			
 			if (((++energyCounter) % energyInterval) == 0)
 			{
 				m_log.Info(Energy());
@@ -380,13 +382,16 @@ namespace OpenSim.Region.Physics.NewtonPlugin
 
         private void SimulateHermite(float timestep) 
         {
-          // TODO: pass in int
-          // calculateAccAndJerk(timestep);
-          savePrimStates();
-          predictPrims(timestep);
-          // TODO: pass in int
-          // calculateAccAndJerk(timestep);
-          finishPrims(timestep);
+			for (int i = 0; i < _prims.Count; i++) {
+				calculateAccAndJerk(i);
+
+			}
+			savePrimStates();
+			predictPrims(timestep);
+			for (int i = 0; i < _prims.Count; i++) {
+				calculateAccAndJerk(i);
+			}
+			finishPrims(timestep);
 
 		}
 

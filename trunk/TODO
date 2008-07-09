@@ -1,18 +1,16 @@
 -*- outline -*-
 
 * Details of Simulation
+** Implement GGL Integrator (Farr & Bertschinger)
+
 ** Check integrator energy-scaling behavior:
 *** Hermite: 4th order
+It probably works (I see fourth order behavior in simple tests).
+However, a large simulation using Hermite dissipates energy pretty
+severely (should probably reduce the timestep a bit to make this
+really work).
 
 ** Energy HUD (instead of output to INFO log)
-
-** Periodic boundary conditions
-Instead of clipping the X and Y coordinates, just have the particle
-exit one side and come in the other.  Also, don't clip at the ground;
-let it pass through.  If you clip any of the coordinates, it means
-that momentum is not conserved, and the center of mass of the system
-will drift (i.e. the system will fly off into the distance); this is
-unphysical.
 
 ** Velocity in ICs
 Add ability to set the velocity (maybe with a script on the prim?) in
