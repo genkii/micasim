@@ -196,8 +196,7 @@ namespace OpenSim.Region.Physics.NewtonPlugin
         public override PhysicsVector Acceleration
         {
             get { return _acceleration; }
-            // TODO: enable once there is a setter to override in PhysicsActor
-            // set { _acceleration = value; }
+ //           set { _acceleration = value; }
         }
 
         public PhysicsVector Jerk 
