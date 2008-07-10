@@ -1,0 +1,41 @@
+Here are some brief instructions to install the Newton physics engine
+in OpenSim.
+
+1. Download the source for OpenSim, for example from their SVN server:
+
+  svn co http://opensimulator.org/svn/opensim/trunk opensim
+
+You will need the open-source .NET framework mono (see
+http://www.mono-project.com/Main_Page ) to build OpenSim.
+
+2. Get the NewtonPhysics engine from its SVN repository:
+
+  svn checkout http://micasim.googlecode.com/svn/trunk/ micasim
+
+3. Copy the prebuild.xml file from the micasim root directory to the
+OpenSim root directory.  (Make a backup copy of the pre-existing
+prebuild.xml in that directory if this makes you nervous.)
+
+4. Copy the NewtonPlugin directory in the micasim root directory to
+opensim/OpenSim/Region/Physics/ .
+
+5. Edit the OpenSim configuration file (found in
+<opensim-root>/bin/OpenSim.ini) to change the "physics = basicphysics"
+to "physics = Newton".
+
+6. Build OpenSim (follow their instructions---as of 10 July 2008, this
+means run ./runprebuild.sh, then run nant).
+
+7. Start an OpenSim server: mono opensim/bin/OpenSim.exe .
+
+8. Connect to that server with your SecondLife client (here is the
+command line to type on my Mac OS X box):
+
+  /Applications/Second\ Life.app/Contents/MacOS/Second\ Life -loginuri http://127.0.0.1:9000/  
+
+9. Rez prims, and make them physical.  All physical prims evolve
+according to Newtonian gravity.
+
+10. Enjoy.  If you make a change to the micasim code, you need only
+repeat steps 3, 4, and 6, and then you're ready to go with the updated
+physics engine.

@@ -36,7 +36,9 @@ namespace OpenSim.Region.Physics.NewtonPlugin
 {
     public class NewtonPrim : PhysicsActor
     {
-        private PhysicsVector _position;
+
+		private float _mass;
+		private PhysicsVector _position;
         private PhysicsVector _velocity;
         private PhysicsVector _oldPosition;
         private PhysicsVector _oldVelocity;
@@ -61,6 +63,7 @@ namespace OpenSim.Region.Physics.NewtonPlugin
 
         public NewtonPrim()
         {
+			_mass = 1.0f;
             _velocity = new PhysicsVector();
             _position = new PhysicsVector();
             _acceleration = new PhysicsVector();
@@ -145,10 +148,15 @@ namespace OpenSim.Region.Physics.NewtonPlugin
 
         public override float Mass
         {
-            get { return 1f; }
+            get { return _mass; }
+
         }
 
-        public override PhysicsVector Force
+
+		public void SetMass(float mass) {
+			_mass = mass;
+		}
+		public override PhysicsVector Force
         {
             get { return PhysicsVector.Zero; }
         }

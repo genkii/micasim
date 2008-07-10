@@ -42,12 +42,16 @@ namespace OpenSim.Region.Physics.NewtonPlugin
         private List<NewtonCharacter> _characters = new List<NewtonCharacter>();
         private List<NewtonPrim> _prims = new List<NewtonPrim>();
         private float[] _heightMap;
-        private const float gravity = -9.8f;
-        private const float eps = 1.0f; // Softening distance. 
+        private const float gravity = -9.8f; // Used only for Characters, not prims
+        private float eps = 1.0f; // Softening distance. 
 
 		private const int energyInterval = 10;
 		private int energyCounter = 0;
 		
+
+		private float alpha = 1.0f; // Position scale factor: X_phys = alpha*X. 
+		private float beta = 1.0f;  // Velocity scale factor---should be 1/Sqrt(alpha)
+			
 
 		public NewtonScene()
         {
@@ -144,49 +148,73 @@ namespace OpenSim.Region.Physics.NewtonPlugin
           return a.X*b.X + a.Y*b.Y + a.Z*b.Z;
         }
 
-        private void calculateAcceleration(int i)
+        private void calculateAcceleration()
         {
-            PhysicsVector accel = new PhysicsVector();
+			// Make sure each Prim has a fresh acceleration vector.
 
-            for (int j = 0; j < _prims.Count; ++j)
-            {
-                if (i == j || !_prims[j].IsPhysical)
-                    continue;
+			for (int i = 0; i < _prims.Count; i++) {
+				_prims[i].SetAcceleration(new PhysicsVector());
+			}
+			
+			for (int i = 0; i < _prims.Count; i++) {
 
-                PhysicsVector direction = _prims[j].Position - _prims[i].Position;
-                float dist2 = distance2(_prims[j].Position, _prims[i].Position);
-                float r = (float) Math.Sqrt(dist2 + eps*eps); // r is softened radius.
 
-                accel += Math.Abs(gravity) * _prims[j].Mass / (r*r*r) * direction;
-            }
+				if (!_prims[i].IsPhysical) continue;
+				
+				NewtonPrim pi = _prims[i];
+				
+				for (int j = i+1; j < _prims.Count; j++) {
+					if (!_prims[j].IsPhysical) continue;
+					NewtonPrim pj = _prims[j];
+					PhysicsVector direction = pj.Position - pi.Position;
+					float dist2 = distance2(pj.Position, pi.Position);
+					float r = (float) Math.Sqrt(dist2 + eps*eps);
+					
+					PhysicsVector acc_over_m = direction / (r*r*r);
+					
+					pi.SetAcceleration(pi.Acceleration + pj.Mass*acc_over_m);
+					pj.SetAcceleration(pj.Acceleration - pi.Mass*acc_over_m);
+				}
+			}
+		}
+		
 
-            _prims[i].SetAcceleration(accel);
-        }
-
-        private void calculateAccAndJerk(int i) {
-          PhysicsVector acc = new PhysicsVector();
-          PhysicsVector jerk = new PhysicsVector();
-
-          for (int j = 0; j < _prims.Count; j++) 
-            {
-              if (i == j || !_prims[j].IsPhysical)
-                continue;
-
-              PhysicsVector direction = _prims[j].Position - _prims[i].Position;
-              PhysicsVector velocity = _prims[j].Velocity - _prims[i].Velocity;
-              float dist2 = distance2(_prims[j].Position, _prims[i].Position);
-              float r = (float) Math.Sqrt(dist2 + eps*eps);
-              float r2 = r*r;
-              float r3 = r2*r;
-              float r5 = r2*r3;
-
-              acc += Math.Abs(gravity) * _prims[j].Mass * direction / r3;
-              jerk += Math.Abs(gravity) * _prims[j].Mass * (velocity/r3 - 3.0f*dot(direction, velocity)/r5 * direction);
-            }
-			_prims[i].SetAcceleration(acc);
-
-			_prims[i].Jerk = jerk;
-        }
+        private void calculateAccAndJerk() {
+			for (int i = 0; i < _prims.Count; i++) {
+				_prims[i].SetAcceleration(new PhysicsVector());
+				_prims[i].Jerk = new PhysicsVector();
+			}
+			
+			for (int i = 0; i < _prims.Count; i++) {
+				if (!_prims[i].IsPhysical) continue;
+				
+				NewtonPrim pi = _prims[i];
+				
+				for (int j = i+1; j < _prims.Count; j++) {
+					if (!_prims[j].IsPhysical) continue;
+					
+					NewtonPrim pj = _prims[j];
+					
+					PhysicsVector direction = pj.Position - pi.Position;
+					PhysicsVector velocity = pj.Velocity - pi.Velocity;
+					
+					float dist2 = distance2(pj.Position, pi.Position);
+					float r = (float) Math.Sqrt(dist2 + eps*eps);
+					float r2 = r*r;
+					float r3 = r2*r;
+					float r5 = r3*r2;
+					
+					PhysicsVector acc_over_mass = direction / r3;
+					PhysicsVector jerk_over_mass = velocity/r3 - 3.0f*dot(direction,velocity)/r5 * direction;
+					
+					pi.SetAcceleration(pi.Acceleration + pj.Mass * acc_over_mass);
+					pj.SetAcceleration(pj.Acceleration - pi.Mass * acc_over_mass);
+					pi.Jerk += pj.Mass * jerk_over_mass;
+					pj.Jerk -= pi.Mass * jerk_over_mass;
+				}
+			}
+		}
+		
 
         private void savePrimStates() 
         {
@@ -225,14 +253,13 @@ namespace OpenSim.Region.Physics.NewtonPlugin
 
         private void updatePrimVelocities(float timestep)
         {
+			calculateAcceleration();
             lock (_prims)
             {
                 for (int i = 0; i < _prims.Count; ++i)
                 {
                     if (!_prims[i].IsPhysical)
                         continue;
-
-                    calculateAcceleration(i);
 
                     _prims[i].Velocity += timestep * _prims[i].Acceleration;
                 }
@@ -337,8 +364,20 @@ namespace OpenSim.Region.Physics.NewtonPlugin
 		{
 
 			float result = simulateCharacters(timestep);
-			for (int i = 0; i < 10; i++) {
-				SimulateHermite(timestep/10.0f);
+			
+			if (shouldRescale()) {
+				rescaleEpsilon();
+				rescaleMasses();
+				rescalePositionVelocity();
+			}			
+				
+			unSetFirstStep();
+			
+			float dt = 0.1f*eps;  // Safety factor of 10
+			int nsteps = (int) (timestep/dt + 0.5f);
+			float actual_dt = timestep/((float) nsteps);
+			for (int i = 0; i < nsteps; i++) {
+				SimulateHermite(actual_dt);
 			}
 
 			
@@ -383,15 +422,10 @@ namespace OpenSim.Region.Physics.NewtonPlugin
 
         private void SimulateHermite(float timestep) 
         {
-			for (int i = 0; i < _prims.Count; i++) {
-				calculateAccAndJerk(i);
-
-			}
+			calculateAccAndJerk();
 			savePrimStates();
 			predictPrims(timestep);
-			for (int i = 0; i < _prims.Count; i++) {
-				calculateAccAndJerk(i);
-			}
+			calculateAccAndJerk();
 			finishPrims(timestep);
 
 		}
@@ -426,7 +460,7 @@ namespace OpenSim.Region.Physics.NewtonPlugin
           float d2 = distance2(p1.Position, p2.Position);
           float r = (float) Math.Sqrt(d2 + eps*eps);
 
-          return -Math.Abs(gravity)*p1.Mass*p2.Mass/r;
+          return -p1.Mass*p2.Mass/r;
         }
 
         public float KineticEnergy() 
@@ -537,21 +571,119 @@ namespace OpenSim.Region.Physics.NewtonPlugin
 			// Need something for first timestep.
 			
 			gglPredict(timestep);
-			for (int i = 0; i < _prims.Count; i++) {
-				calculateAcceleration(i);
-			}
+			calculateAcceleration();
 			gglSaveA1();
 			gglFinalPosition(timestep);
-			for (int i = 0; i < _prims.Count; i++) {
-				calculateAcceleration(i);
-			}
+			calculateAcceleration();
 			gglSaveA2();
 			gglFinalVelocity(timestep);
-			for (int i = 0; i < _prims.Count; i++) {
-				calculateAccAndJerk(i);
-			}
-			gglSaveA2J2();
-			
+			calculateAccAndJerk();
+			gglSaveA2J2();			
 		}
-    }
+		
+		private float totalPhysicalMass() {
+			float mtot = 0.0f;
+			
+			for (int i = 0; i < _prims.Count; i++) {
+				if (_prims[i].IsPhysical) {
+					mtot += _prims[i].Mass;
+				}
+			}
+			
+			return mtot;
+		}
+		
+		private void rescaleMasses() {
+			float mtot = totalPhysicalMass();
+			
+			for (int i = 0; i < _prims.Count; i++) {
+				if (_prims[i].IsPhysical) {
+					_prims[i].SetMass(_prims[i].Mass / mtot);
+				}
+			}
+		}
+		
+		private PhysicsVector centerOfMass() {
+			PhysicsVector com = new PhysicsVector();
+
+			float mtot = totalPhysicalMass();
+			
+			for (int i = 0; i < _prims.Count; i++) {
+				if (!_prims[i].IsPhysical) continue;
+				
+				com += _prims[i].Position * _prims[i].Mass / mtot;
+			}
+			
+			return com;
+		}
+		
+		private PhysicsVector comVelocity() {
+			PhysicsVector vcm = new PhysicsVector();
+			float mtot = totalPhysicalMass();
+			
+			for (int i = 0; i < _prims.Count; i++) {
+				if (!_prims[i].IsPhysical) continue;
+				
+				vcm += _prims[i].Velocity * _prims[i].Mass / mtot;
+			}
+			
+			return vcm;
+		}
+		
+		private void rescalePositionVelocity() {
+			float E = Energy();
+			
+			alpha = -4.0f*E;
+			beta = 1.0f/((float) Math.Sqrt(alpha));
+			
+			PhysicsVector com = centerOfMass();
+			PhysicsVector vcm = comVelocity();
+			
+			for (int i = 0; i < _prims.Count; i++) {
+				if (!_prims[i].IsPhysical) continue;
+				
+				PhysicsVector relPos = _prims[i].Position - com;
+				PhysicsVector relVel = _prims[i].Velocity - vcm;
+				
+				_prims[i].Position = com + alpha * relPos;
+				_prims[i].Velocity = vcm + beta * relVel;
+			}
+		}
+		
+
+		// Re-scale position and momentum if there is a physical prim in the scene which is on its first step.
+		private bool shouldRescale() {
+			for (int i = 0; i < _prims.Count; i++) {
+				if (!_prims[i].IsPhysical) continue;
+				
+				if (_prims[i].FirstStep) return true;
+			}
+			
+			return false;
+		}
+		
+		private void unSetFirstStep() {
+			for (int i = 0; i < _prims.Count; i++) {
+				if (!_prims[i].IsPhysical) continue;
+				
+				_prims[i].FirstStep = false;
+			}
+		}
+		
+		// This rescales Epsilon to a very small value---one appropriate for tracking all but the hardest binaries.
+		private void rescaleEpsilon() {
+			int nPhys = 0;
+			
+			for (int i = 0; i < _prims.Count; i++) {
+				if (!_prims[i].IsPhysical) continue;
+				
+				nPhys++;
+			}
+			
+			eps = 4.0f/((float) nPhys);
+		}
+
+
+
+	}
 }

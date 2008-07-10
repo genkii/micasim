@@ -10,6 +10,14 @@ However, a large simulation using Hermite dissipates energy pretty
 severely (should probably reduce the timestep a bit to make this
 really work).
 
+** Units
+Should come to some sort of standard units.  The usual choice is M_tot
+= 1, G = 1, and E = -1/4 (this last makes <1/r_ij> = 1, where <...>
+refers to the average over pairs).  The real question is when to apply
+the unit corrections---the simulator may not have a well-defined
+"beginning" of a simulation, since people can rez prims at basically
+any time.
+
 ** Energy HUD (instead of output to INFO log)
 
 ** Velocity in ICs
