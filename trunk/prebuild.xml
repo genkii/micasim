@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Prebuild xmlns="http://dnpb.sourceforge.net/schemas/prebuild-1.7.xsd" version="1.7">
-  <Solution name="OpenSim" activeConfig="Debug" path="./" version="0.5.0-$Rev: 5380 $">
+  <Solution name="OpenSim" activeConfig="Debug" path="./" version="0.5.0-$Rev: 5435 $">
     <Configuration name="Debug">
       <Options>
         <CompilerDefines>TRACE;DEBUG</CompilerDefines>
@@ -807,6 +807,7 @@
       <Reference name="OpenSim.Data.Base"/>
       <Reference name="Nini.dll" />
       <Reference name="log4net.dll"/>
+      <Reference name="DotNetOpenMail.dll"/>
 
       <Files>
         <Match pattern="*.cs" recurse="true"/>
@@ -1567,6 +1568,7 @@
       <Reference name="OpenSim.Framework"/>
       <Reference name="OpenSim.Framework.Communications"/>
       <Reference name="OpenSim.Region.Environment" />
+      <Reference name="OpenSim.Region.Physics.Manager" />
       <Reference name="OpenSim.Framework.Console"/>
       <Reference name="OpenSim.Region.ScriptEngine.Shared"/>
       <Reference name="OpenSim.Region.ScriptEngine.Shared.Api.Runtime"/>
@@ -1625,6 +1627,7 @@
       </Configuration>
 
       <ReferencePath>../../../../../../../bin/</ReferencePath>
+      <Reference name="System" localCopy="false"/>
       <Reference name="OpenSim.Region.ScriptEngine.Shared.CodeTools"/>
       <Reference name="nunit.framework.dll" />
       <Reference name="Tools.dll" />
@@ -1849,6 +1852,7 @@
       <Reference name="OpenSim.Framework"/>
       <Reference name="OpenSim.Framework.Communications"/>
       <Reference name="OpenSim.Region.Environment" />
+      <Reference name="OpenSim.Region.Physics.Manager" />
       <Reference name="OpenSim.Framework.Console"/>
       <Reference name="Axiom.MathLib.dll" localCopy="false"/>
       <Reference name="Nini.dll" />
