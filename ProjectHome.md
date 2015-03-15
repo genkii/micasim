@@ -1,0 +1,1 @@
+An easy to use 3D simulation software which makes computational astrophysics approachable for anyone.  MICA Simulator is based off the OpenSimulator project.
